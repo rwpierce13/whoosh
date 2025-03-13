@@ -1,0 +1,23 @@
+{
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "resources" : [
+    {
+      "filename" : "ball1.arobject"
+    },
+    {
+      "filename" : "ball2.arobject"
+    },
+    {
+      "filename" : "ball3.arobject"
+    },
+    {
+      "filename" : "gnome.arobject"
+    },
+    {
+      "filename" : "turtle.arobject"
+    }
+  ]
+}
