@@ -17,7 +17,9 @@ protocol CameraOutputDelegate: AnyObject {
 
 class CameraModel: NSObject, ObservableObject {
     
-    weak var outputDelegate: CameraOutputDelegate?
+    weak var detectorDelegate: CameraOutputDelegate?
+    weak var visionDelegate: CameraOutputDelegate?
+    
     private let videoDataOutputQueue = DispatchQueue(label: "com.Woosh.VideoDataOutput", qos: .userInitiated,
                                                      attributes: [], autoreleaseFrequency: .workItem)
     private let sessionQueue = DispatchQueue(label: "com.Woosh.SessionQueue")
@@ -106,24 +108,30 @@ class CameraModel: NSObject, ObservableObject {
     }
     
     func convertVisionPointsToCameraPoint(_ points: [CGPoint]) -> [CGPoint] {
-        return points.map { previewLayer.layerPointConverted(fromCaptureDevicePoint: $0) }
+        //Flip y then convert to layerSpace
+        let new = points.map { CGPoint(x: $0.x, y: 1 - $0.y) }
+        return new.map { previewLayer.layerPointConverted(fromCaptureDevicePoint: $0) }
     }
-    
-    func convertedVisionRectToCameraRect(_ rect: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)) -> CGRect {
-        return previewLayer.layerRectConverted(fromMetadataOutputRect: rect)
-    }
-    
-    func convertPoints(_ points: [VNPoint]) -> [CGPoint] {
-        var new = points.map { $0.location }
-        new = new.map { CGPoint(x: $0.x, y: 1 - $0.y) }
-        return convertVisionPointsToCameraPoint(new)
+        
+    func convertVisionRectToCameraRect(_ rect: CGRect) -> CGRect {
+        //Flip y then convert to layerSpace
+        let flip = CGRect(x: rect.minX,
+                          y: 1 - rect.minY,
+                          width: rect.width,
+                          height: rect.height)
+        let start = previewLayer.layerPointConverted(fromCaptureDevicePoint: flip.origin)
+        let end = previewLayer.layerPointConverted(fromCaptureDevicePoint: CGPoint(x: flip.maxX, y: flip.maxY))
+        let size = CGSize(width: abs(end.x - start.x), height: abs(end.y - start.y))
+        let new = CGRect(origin: start, size: size)
+        return new
     }
 }
 
 extension CameraModel: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        outputDelegate?.cameraModel(self, didReceiveBuffer: sampleBuffer, orientation: .up)
+        detectorDelegate?.cameraModel(self, didReceiveBuffer: sampleBuffer, orientation: .up)
+        visionDelegate?.cameraModel(self, didReceiveBuffer: sampleBuffer, orientation: .up)
     }
 }
 

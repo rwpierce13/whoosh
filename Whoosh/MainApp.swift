@@ -14,7 +14,10 @@ struct MainApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationView {
+                VisionView()
+                    .edgesIgnoringSafeArea(.all)
+            }
         }
     }
 }

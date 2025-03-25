@@ -7,6 +7,16 @@
 
 import SwiftUI
 import Foundation
+import Vision
+
+
+extension VNTrackingRequest {
+    
+    func completeTracking(with handler: VNSequenceRequestHandler, on sampleBuffer: CMSampleBuffer) throws {
+        isLastFrame = true
+        try handler.perform([self], on: sampleBuffer)
+    }
+}
 
 
 extension NSError {

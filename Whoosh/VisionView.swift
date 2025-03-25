@@ -14,26 +14,41 @@ import VisionKit
 struct VisionView: View {
     
     @StateObject var cameraModel = CameraModel()
-    @StateObject var visionModel = VisionModel()
+    //@StateObject var visionModel = VisionModel()
+    @StateObject var detectorModel = DetectorModel()
     
     var body: some View {
         GeometryReader { geo in
             ZStack {
                 CameraPreview(frame: CGRect(origin: .zero, size: geo.size))
+                /*
                 ForEach(visionModel.collections) { col in
                     TrajectoryView(collection: col)
+                }
+                 */
+                if let tee = detectorModel.tee {
+                    DetectionView(detection: tee)
+                }
+                if let hole = detectorModel.hole {
+                    DetectionView(detection: hole)
+                }
+                if let ball = detectorModel.ball {
+                    DetectionView(detection: ball)
                 }
             }
         }
         .onAppear {
-            cameraModel.outputDelegate = visionModel
+            //cameraModel.visionDelegate = visionModel
+            cameraModel.detectorDelegate = detectorModel
         }
         .environmentObject(cameraModel)
-        .environmentObject(visionModel)
+        //.environmentObject(visionModel)
+        .environmentObject(detectorModel)
         .toolbar {
             ToolbarItemGroup {
                 Button {
-                    visionModel.reset()
+                    //visionModel.reset()
+                    detectorModel.reset()
                 } label: {
                     Text("Reset")
                 }
@@ -81,7 +96,7 @@ struct PointCollection: Identifiable, CustomStringConvertible {
             return true
         }
         
-        print("$$$ NOT TIME \(diff)")
+        //print("$$$ NOT TIME \(diff)")
         return false
     }
     
@@ -96,7 +111,7 @@ struct PointCollection: Identifiable, CustomStringConvertible {
         let colDy = col.points[0].y - col.points[1].y
         let colAngle = atanl(colDx / colDy) * 180 / Double.pi
         
-        print("$$$ ANGLES \(angle) \(colAngle)")
+        //print("$$$ ANGLES \(angle) \(colAngle)")
         
         return fabs(angle - colAngle) < maxAngle
     }
@@ -117,7 +132,7 @@ struct PointCollection: Identifiable, CustomStringConvertible {
         guard !self.points.isEmpty, !col.points.isEmpty else { return false }
         guard let end = self.points.last, let startCol = col.points.first else { return false }
         
-        print("$$$ ENDPOINTS \(end) \(startCol)")
+        //print("$$$ ENDPOINTS \(end) \(startCol)")
         return end.isNear(startCol, max: max)
     }
     
@@ -148,19 +163,19 @@ class VisionModel: NSObject, ObservableObject {
                 if path.uuid.uuidString == col.id {
                     up = updatedPointCollection(col, with: path)
                     index = collections.firstIndex(where: { $0.id == up!.id })
-                    print("$$$ UP ID \(up!)")
+                    //print("$$$ UP ID \(up!)")
                     break
                 }
                 if col.similarEndpoints(new) { //}&& col.similarAngle(new) {
                     up = updatedPointCollection(col, with: path)
                     index = collections.firstIndex(where: { $0.id == up!.id })
-                    print("$$$ UP END \(up!)")
+                    //print("$$$ UP END \(up!)")
                     break
                 }
                 if col.similarTimes(new) && col.similarLocation(new) {
                     up = updatedPointCollection(col, with: path)
                     index = collections.firstIndex(where: { $0.id == up!.id })
-                    print("$$$ UP TIMES \(up!)")
+                    //print("$$$ UP TIMES \(up!)")
                     break
                 }
             }
@@ -169,10 +184,10 @@ class VisionModel: NSObject, ObservableObject {
                 collections.append(up!)
             } else {
                 collections.append(new)
-                print("$$$ NEW \(new)")
+                //print("$$$ NEW \(new)")
             }
         }
-        print("$$$ \(collections.count)")
+        //print("$$$ \(collections.count)")
     }
     
     func updatedPointCollection(_ collection: PointCollection, with path: VNTrajectoryObservation) -> PointCollection {
@@ -191,7 +206,7 @@ class VisionModel: NSObject, ObservableObject {
         
         col.points = oldPoints + appending
         let newTimeRange = col.timeRange.union(path.timeRange)
-        print("$$$ CHANGES \(appending.count)")
+        //print("$$$ CHANGES \(appending.count)")
         col.timeRange = newTimeRange
         return col
     }

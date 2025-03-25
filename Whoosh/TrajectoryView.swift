@@ -15,8 +15,7 @@ struct TrajectoryView: View {
     var collection: PointCollection
     
     func convertedPoints() -> [CGPoint] {
-        var points = collection.points.map { $0.location }
-        points = points.map { CGPoint(x: $0.x, y: 1 - $0.y) }
+        let points = collection.points.map { $0.location }
         return cameraModel.convertVisionPointsToCameraPoint(points)
     }
     
