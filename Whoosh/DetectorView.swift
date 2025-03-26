@@ -131,6 +131,7 @@ class DetectorModel: NSObject, ObservableObject {
 extension DetectorModel: CameraOutputDelegate {
     func cameraModel(_ cameraModel: CameraModel, didReceiveBuffer buffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) {
         
+        
         detectionQueue.async {
             do {
                 if let ball = self.ball {
