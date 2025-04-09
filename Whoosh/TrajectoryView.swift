@@ -35,3 +35,21 @@ struct Trajectory: Shape {
     }
     
 }
+
+
+struct DetectionTrajectoryView: View {
+    
+    @EnvironmentObject var cameraModel: CameraModel
+    var collection: DetectionCollection
+    
+    func convertedPoints() -> [CGPoint] {
+        let points = collection.detections.map { $0.box.center }
+        return cameraModel.convertVisionPointsToCameraPoint(points)
+    }
+    
+    var body: some View {
+        Trajectory(points: convertedPoints())
+            .stroke(collection.color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+    }
+    
+}

@@ -57,10 +57,13 @@ struct Detection: Identifiable {
     }
 }
 
-
+protocol BallChangeDelegate {
+    func ballDidChange(_ ball: Detection?)
+}
 
 class DetectorModel: NSObject, ObservableObject {
     
+    var ballChangeDelegate: BallChangeDelegate?
     var detections: [Detection] = []
     @Published var ball: Detection?
     @Published var hole: Detection?
@@ -111,11 +114,15 @@ class DetectorModel: NSObject, ObservableObject {
     
     @MainActor
     func processTrackingResults(_ results: [VNDetectedObjectObservation]) {
-        guard let result = results.first, result.confidence > 0.8 else { return }
+        guard let result = results.first, result.confidence > 0.8 else {
+            ballChangeDelegate?.ballDidChange(nil)
+            return
+        }
         ball?.box = result.boundingBox
         ball?.observation = result
+        ballChangeDelegate?.ballDidChange(ball)
     }
-    
+        
     @MainActor
     func reset() {
         detections = []
@@ -186,7 +193,7 @@ struct DetectionView: View {
     
     var body: some View {
         BoundingBox(box: convertedRect())
-            .stroke(detection.color, style: StrokeStyle(lineWidth: 5, lineCap: .square))
+            .stroke(detection.color, style: StrokeStyle(lineWidth: 3, lineCap: .square))
     }
 }
 
