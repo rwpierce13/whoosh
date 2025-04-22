@@ -25,17 +25,6 @@ struct TrajectoryView: View {
     }
 }
 
-struct Trajectory: Shape {
-    
-    var points: [CGPoint] = []
-    
-    func path(in rect: CGRect) -> Path {
-        let trajectory = UIBezierPath.smoothPath(points)
-        return Path(trajectory.cgPath)
-    }
-    
-}
-
 
 struct DetectionTrajectoryView: View {
     

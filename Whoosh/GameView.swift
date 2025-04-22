@@ -11,10 +11,9 @@ import Vision
 import VisionKit
 
 
-struct VisionView: View {
+struct GameView: View {
     
     @StateObject var cameraModel = CameraModel()
-    //@StateObject var visionModel = VisionModel()
     @StateObject var detectorModel = DetectorModel()
     @StateObject var gameModel = GameModel()
     
@@ -22,11 +21,7 @@ struct VisionView: View {
         GeometryReader { geo in
             ZStack {
                 CameraPreview(frame: CGRect(origin: .zero, size: geo.size))
-                /*
-                ForEach(visionModel.collections) { col in
-                    TrajectoryView(collection: col)
-                }
-                 */
+
                 ControlsView()
                 if let tee = detectorModel.tee {
                     DetectionView(detection: tee)
@@ -43,12 +38,10 @@ struct VisionView: View {
             }
         }
         .onAppear {
-            //cameraModel.visionDelegate = visionModel
             cameraModel.detectorDelegate = detectorModel
             detectorModel.ballChangeDelegate = gameModel
         }
         .environmentObject(cameraModel)
-        //.environmentObject(visionModel)
         .environmentObject(detectorModel)
         .environmentObject(gameModel)
     }
@@ -262,29 +255,7 @@ struct LinesOverlay: View {
     }
 }
 
-struct Circle: Shape {
-    
-    var point: CGPoint
-    var radius: CGFloat
-    
-    func path(in rect: CGRect) -> Path {
-        let circle = UIBezierPath(arcCenter: point, radius: radius, startAngle: Double.pi * 3/2, endAngle: Double.pi * 7/2, clockwise: true)
-        return Path(circle.cgPath)
-    }
-}
 
-struct Line: Shape {
-    
-    var start: CGPoint
-    var end: CGPoint
-    
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: start)
-        path.addLine(to: end)
-        return path
-    }
-}
 
 let MaxLocationComparison: Double = 0.04
 let MaxTimeComparison: Double = 0.1
@@ -371,128 +342,3 @@ struct PointCollection: Identifiable, CustomStringConvertible {
         return line.overlapsPath(point, toleranceWidth: 8.0)
     }
 }
-
-
-//MARK: -
-class VisionModel: NSObject, ObservableObject {
-
-    @Published var collections: [PointCollection] = []
-    @Published var error: Error?
-    
-    private let minConfidence: VNConfidence = 0.95
-    private let trajectoryQueue = DispatchQueue(label: "com.Whoosh.TrajectoryQueue", qos: .userInteractive)
-    private lazy var detectTrajectoryRequest: VNDetectTrajectoriesRequest! = VNDetectTrajectoriesRequest(frameAnalysisSpacing: .zero, trajectoryLength: 6)
-    
-    func processTrajectoryResults(_ results: [VNTrajectoryObservation]) {
-        for path in results where path.confidence > minConfidence {
-            let new = PointCollection(path)
-            var up: PointCollection?
-            var index: Int?
-            for col in collections {
-                if path.uuid.uuidString == col.id {
-                    up = updatedPointCollection(col, with: path)
-                    index = collections.firstIndex(where: { $0.id == up!.id })
-                    //print("$$$ UP ID \(up!)")
-                    break
-                }
-                if col.similarEndpoints(new) { //}&& col.similarAngle(new) {
-                    up = updatedPointCollection(col, with: path)
-                    index = collections.firstIndex(where: { $0.id == up!.id })
-                    //print("$$$ UP END \(up!)")
-                    break
-                }
-                if col.similarTimes(new) && col.similarLocation(new) {
-                    up = updatedPointCollection(col, with: path)
-                    index = collections.firstIndex(where: { $0.id == up!.id })
-                    //print("$$$ UP TIMES \(up!)")
-                    break
-                }
-            }
-            if let i = index {
-                collections.remove(at: i)
-                collections.append(up!)
-            } else {
-                collections.append(new)
-                //print("$$$ NEW \(new)")
-            }
-        }
-        //print("$$$ \(collections.count)")
-    }
-    
-    func updatedPointCollection(_ collection: PointCollection, with path: VNTrajectoryObservation) -> PointCollection {
-        var col = collection
-        let oldPoints = col.points
-        let newPoints = path.detectedPoints
-        var appending = [VNPoint]()
-        
-        //Check the last new points, 2 just in case
-        let pre = newPoints.suffix(newPoints.count > 6 ? 2 : 1)
-        for new in pre {
-            if !col.overlapsPath(new.location) {
-                appending.append(new)
-            }
-        }
-        
-        col.points = oldPoints + appending
-        let newTimeRange = col.timeRange.union(path.timeRange)
-        //print("$$$ CHANGES \(appending.count)")
-        col.timeRange = newTimeRange
-        return col
-    }
-        
-    func analyze(_ points: [VNPoint]) {
-        for (i, point) in points.enumerated() {
-            if i < points.count - 2 {
-                let dist = point.distance(points[i + 1])
-                print(dist)
-            }
-        }
-    }
-    
-    func reset() {
-        collections = []
-    }
-}
-
-extension CMTimeRange {
-    
-    func overlaps(_ timeRange: CMTimeRange) -> Bool {
-        return !self.intersection(timeRange).isEmpty
-    }
-}
-
-extension VNPoint {
-    
-    func isNear(_ point: VNPoint, max: Double = MaxLocationComparison) -> Bool {
-        let distance = self.distance(point)
-        return distance < max
-    }
-}
-
-
-extension VisionModel: CameraOutputDelegate {
-    func cameraModel(_ cameraModel: CameraModel, didReceiveBuffer buffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) {
-        let visionHandler = VNImageRequestHandler(cmSampleBuffer: buffer, orientation: orientation, options: [:])
-        
-        trajectoryQueue.async {
-            do {
-                try visionHandler.perform([self.detectTrajectoryRequest])
-                if let results = self.detectTrajectoryRequest.results, !results.isEmpty {
-                    DispatchQueue.main.async {
-                        self.processTrajectoryResults(results)
-                    }
-                }
-            } catch (let err) {
-                DispatchQueue.main.async {
-                    self.error = err
-                    print(err)
-                }
-            }
-        }
-    }
-    
-}
-
-
-
-
