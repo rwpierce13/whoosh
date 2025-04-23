@@ -115,3 +115,90 @@ extension TrajectoryModel: CameraOutputDelegate {
 }
 
 
+
+
+let MaxLocationComparison: Double = 0.04
+let MaxTimeComparison: Double = 0.1
+let MaxAngleComparison: Double = 10
+
+struct PointCollection: Identifiable, CustomStringConvertible {
+    
+    let id: String
+    var points: [VNPoint] = []
+    var color: Color = Color.randomColor()
+    var timeRange: CMTimeRange
+    var cgPoints: [CGPoint] = []
+    
+    init(_ path: VNTrajectoryObservation) {
+        self.id = path.uuid.uuidString
+        self.points = path.detectedPoints
+        self.timeRange = path.timeRange
+    }
+    
+    var startSeconds: Double {
+        return timeRange.start.seconds
+    }
+    
+    var endSeconds: Double {
+        return timeRange.end.seconds
+    }
+    
+    var description: String {
+        return "PointCollection \(id)\n\t\(points.count) points\n\t\(startSeconds) \(endSeconds)"
+    }
+    
+    func similarTimes(_ col: PointCollection, maxTime: Double = MaxTimeComparison) -> Bool {
+        if self.timeRange.overlaps(col.timeRange) {
+            return true
+        }
+        let diff = abs(self.endSeconds - col.startSeconds)
+        if diff < maxTime {
+            return true
+        }
+        
+        //print("$$$ NOT TIME \(diff)")
+        return false
+    }
+    
+    func similarAngle(_ col: PointCollection, maxAngle: Double = MaxAngleComparison) -> Bool {
+        guard self.points.count > 1, col.points.count > 1 else { return false }
+        let count = self.points.count
+        let dx = self.points[count - 1].x - self.points[count - 2].x
+        let dy = self.points[0].y - self.points[1].y
+        let angle = atanl(dx / dy) * 180 / Double.pi
+        
+        let colDx = col.points[0].x - col.points[1].x
+        let colDy = col.points[0].y - col.points[1].y
+        let colAngle = atanl(colDx / colDy) * 180 / Double.pi
+        
+        //print("$$$ ANGLES \(angle) \(colAngle)")
+        
+        return fabs(angle - colAngle) < maxAngle
+    }
+    
+    func similarLocation(_ col: PointCollection, max: Double = MaxLocationComparison) -> Bool {
+        for p in self.points {
+            for c in col.points {
+                if p.isNear(c, max: max) {
+                    return true;
+                }
+            }
+        }
+        
+        return false
+    }
+    
+    func similarEndpoints(_ col: PointCollection, max: Double = MaxLocationComparison) -> Bool {
+        guard !self.points.isEmpty, !col.points.isEmpty else { return false }
+        guard let end = self.points.last, let startCol = col.points.first else { return false }
+        
+        //print("$$$ ENDPOINTS \(end) \(startCol)")
+        return end.isNear(startCol, max: max)
+    }
+    
+    func overlapsPath(_ point: CGPoint) -> Bool {
+        let cg1 = self.points.map { $0.location }
+        let line = UIBezierPath.line(for: cg1)
+        return line.overlapsPath(point, toleranceWidth: 8.0)
+    }
+}

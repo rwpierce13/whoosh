@@ -12,23 +12,6 @@ import Vision
 struct TrajectoryView: View {
     
     @EnvironmentObject var cameraModel: CameraModel
-    var collection: PointCollection
-    
-    func convertedPoints() -> [CGPoint] {
-        let points = collection.points.map { $0.location }
-        return cameraModel.convertVisionPointsToCameraPoint(points)
-    }
-    
-    var body: some View {
-        Trajectory(points: convertedPoints())
-            .stroke(collection.color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-    }
-}
-
-
-struct DetectionTrajectoryView: View {
-    
-    @EnvironmentObject var cameraModel: CameraModel
     var collection: DetectionCollection
     
     func convertedPoints() -> [CGPoint] {
@@ -42,3 +25,21 @@ struct DetectionTrajectoryView: View {
     }
     
 }
+
+
+struct DetectionView: View {
+    
+    @EnvironmentObject var detectorModel: DetectorModel
+    @EnvironmentObject var cameraModel: CameraModel
+    var detection: Detection
+    
+    func convertedRect() -> CGRect {
+        return cameraModel.convertVisionRectToCameraRect(detection.box)
+    }
+    
+    var body: some View {
+        BoundingBox(box: convertedRect())
+            .stroke(detection.color, style: StrokeStyle(lineWidth: 3, lineCap: .square))
+    }
+}
+

@@ -45,3 +45,15 @@ struct Trajectory: Shape {
     }
     
 }
+
+
+struct BoundingBox: Shape {
+    
+    var box: CGRect
+    
+    func path(in rect: CGRect) -> Path {
+        let box = UIBezierPath(rect: box)
+        return Path(box.cgPath)
+    }
+    
+}

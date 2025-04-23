@@ -32,8 +32,8 @@ struct GameView: View {
                 if let ball = detectorModel.ball {
                     DetectionView(detection: ball)
                 }
-                if let col = gameModel.collection {
-                    DetectionTrajectoryView(collection: col)
+                if let putt = gameModel.putt {
+                    TrajectoryView(collection: putt)
                 }
             }
         }
@@ -48,94 +48,9 @@ struct GameView: View {
 }
 
 
-enum GameState {
-    case initial, ready, recording, done
-    
-    var statusText: String {
-        switch self {
-        case .initial:
-            return "Searching for ball"
-        case .ready:
-            return "Ready to record!"
-        case .recording:
-            return "Recording..."
-        case .done:
-            return "Done!"
-        }
-    }
-}
-
-class GameModel: ObservableObject {
-    
-    @Published var state: GameState = .initial
-    @Published var collection: DetectionCollection?
-    
-    //Normalized lines
-    let circle: (CGPoint, CGFloat) = (CGPoint(x: 0.5, y: 0.85), 0.04)
-    let vLine: (CGPoint, CGPoint) = (CGPoint(x: 0.5, y: 0.81), CGPoint(x: 0.5, y: 0.15))
-    let crossV: (CGPoint, CGPoint) = (CGPoint(x: 0.5, y: 0.84), CGPoint(x: 0.5, y: 0.86))
-    let crossH: (CGPoint, CGPoint) = (CGPoint(x: 0.48, y: 0.85), CGPoint(x: 0.52, y: 0.85))
-
-    func record() {
-        state = .recording
-        collection = DetectionCollection()
-    }
-    
-    func finish() {
-        state = .done
-    }
-    
-    func reset() {
-        state = .initial
-        collection = nil
-    }
-    
-    func ballInCircle(_ ball: Detection?) -> Bool {
-        guard let b = ball else { return false }
-        let convertedBallCenter = CGPoint(x: 1 - b.box.center.y, y: b.box.center.x)
-        let dx = abs(circle.0.x - convertedBallCenter.x)
-        let dy = abs(circle.0.y - convertedBallCenter.y)
-        return dx < 0.02 && dy < 0.02
-    }
-}
-
-extension GameModel: BallChangeDelegate {
-    
-    func ballDidChange(_ ball: Detection?) {
-        guard let b = ball else {
-            if state == .recording {
-                state = .done
-            }
-            return
-        }
-        
-        if state == .initial, ballInCircle(ball) {
-            state = .ready
-        } else if state == .ready, !ballInCircle(ball) {
-            state = .initial
-        }
-        
-        guard let col = collection else { return }
-        var newCol = col
-        newCol.detections.append(b)
-        collection = newCol
-    }
-}
 
 
-struct DetectionCollection: Identifiable {
-    var id: UUID = UUID()
-    var detections: [Detection] = []
-    
-    var color: Color {
-        if let first = detections.first {
-            return first.color
-        }
-        return .blue
-    }
-}
-
-
+//MARK: -
 struct ControlsView: View {
     
     @EnvironmentObject var detectorModel: DetectorModel
@@ -151,7 +66,7 @@ struct ControlsView: View {
                     gameModel.record()
                 case .recording:
                     gameModel.finish()
-                case .done:
+                case .done, .error:
                     gameModel.reset()
                     detectorModel.reset()
                 }
@@ -206,10 +121,25 @@ struct ControlsView: View {
             .padding(20)
             .background(.white)
             .cornerRadius(10)
+        case .error:
+            HSStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .fitTo(width: 32)
+                    .foregroundStyle(.yellow)
+                    .padding(.trailing, 20)
+                Text("ERROR")
+                    .font(Font.system(size: 20))
+                    .foregroundStyle(.green)
+            }
+            .padding(20)
+            .background(.white)
+            .cornerRadius(10)
         }
     }
 }
 
+
+//MARK: -
 struct LinesOverlay: View {
         
     @EnvironmentObject var gameModel: GameModel
@@ -252,93 +182,5 @@ struct LinesOverlay: View {
     
     private func convertPoint(_ point: CGPoint, with size: CGSize) -> CGPoint {
         return CGPoint(x: point.x * size.width, y: point.y * size.height)
-    }
-}
-
-
-
-let MaxLocationComparison: Double = 0.04
-let MaxTimeComparison: Double = 0.1
-let MaxAngleComparison: Double = 10
-
-struct PointCollection: Identifiable, CustomStringConvertible {
-    
-    let id: String
-    var points: [VNPoint] = []
-    var color: Color = Color.randomColor()
-    var timeRange: CMTimeRange
-    var cgPoints: [CGPoint] = []
-    
-    init(_ path: VNTrajectoryObservation) {
-        self.id = path.uuid.uuidString
-        self.points = path.detectedPoints
-        self.timeRange = path.timeRange
-    }
-    
-    var startSeconds: Double {
-        return timeRange.start.seconds
-    }
-    
-    var endSeconds: Double {
-        return timeRange.end.seconds
-    }
-    
-    var description: String {
-        return "PointCollection \(id)\n\t\(points.count) points\n\t\(startSeconds) \(endSeconds)"
-    }
-    
-    func similarTimes(_ col: PointCollection, maxTime: Double = MaxTimeComparison) -> Bool {
-        if self.timeRange.overlaps(col.timeRange) {
-            return true
-        }
-        let diff = abs(self.endSeconds - col.startSeconds)
-        if diff < maxTime {
-            return true
-        }
-        
-        //print("$$$ NOT TIME \(diff)")
-        return false
-    }
-    
-    func similarAngle(_ col: PointCollection, maxAngle: Double = MaxAngleComparison) -> Bool {
-        guard self.points.count > 1, col.points.count > 1 else { return false }
-        let count = self.points.count
-        let dx = self.points[count - 1].x - self.points[count - 2].x
-        let dy = self.points[0].y - self.points[1].y
-        let angle = atanl(dx / dy) * 180 / Double.pi
-        
-        let colDx = col.points[0].x - col.points[1].x
-        let colDy = col.points[0].y - col.points[1].y
-        let colAngle = atanl(colDx / colDy) * 180 / Double.pi
-        
-        //print("$$$ ANGLES \(angle) \(colAngle)")
-        
-        return fabs(angle - colAngle) < maxAngle
-    }
-    
-    func similarLocation(_ col: PointCollection, max: Double = MaxLocationComparison) -> Bool {
-        for p in self.points {
-            for c in col.points {
-                if p.isNear(c, max: max) {
-                    return true;
-                }
-            }
-        }
-        
-        return false
-    }
-    
-    func similarEndpoints(_ col: PointCollection, max: Double = MaxLocationComparison) -> Bool {
-        guard !self.points.isEmpty, !col.points.isEmpty else { return false }
-        guard let end = self.points.last, let startCol = col.points.first else { return false }
-        
-        //print("$$$ ENDPOINTS \(end) \(startCol)")
-        return end.isNear(startCol, max: max)
-    }
-    
-    func overlapsPath(_ point: CGPoint) -> Bool {
-        let cg1 = self.points.map { $0.location }
-        let line = UIBezierPath.line(for: cg1)
-        return line.overlapsPath(point, toleranceWidth: 8.0)
     }
 }

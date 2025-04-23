@@ -57,8 +57,63 @@ struct Detection: Identifiable {
     }
 }
 
+
+//MARK: -
+struct DetectionCollection: Identifiable {
+    var id: UUID = UUID()
+    var detections: [Detection] = []
+    var velocities: [CGFloat] = []
+    
+    private let MinimumMovingVelocity = 1e-3
+    private let StationaryCount = 4
+    private let MinumumDistance = 5e-4
+
+    var color: Color {
+        if let first = detections.first {
+            return first.color
+        }
+        return .blue
+    }
+    
+    func endIsStationary() -> Bool {
+        guard velocities.count > StationaryCount else { return false }
+        let endVelocities = velocities.suffix(StationaryCount)
+        if endVelocities.contains(where: { abs($0) > MinimumMovingVelocity }) {
+            return false
+        }
+        return true
+    }
+    
+    func calcLastVelocity() -> CGFloat? {
+        let lastIndex = detections.count - 1
+        let secondLastIndex = detections.count - 2
+        guard lastIndex > 0, secondLastIndex >= 0 else { return nil }
+        let lastDet = detections[lastIndex]
+        let secondLastDet = detections[secondLastIndex]
+        let dt = lastDet.observation.timeRange.start.seconds - secondLastDet.observation.timeRange.start.seconds
+        let distance = lastDet.box.center.distance(to: secondLastDet.box.center)
+        if distance <= MinumumDistance {
+            return 0
+        }
+        let velocity = distance / CGFloat(dt)
+        return velocity
+    }
+    
+    func didStart() -> Bool {
+        return velocities.filter { $0 > MinimumMovingVelocity }.count >= StationaryCount
+    }
+    
+    func didEnd() -> Bool {
+        return didStart() && endIsStationary()
+    }
+}
+
+
+
+//MARK: -
 protocol BallChangeDelegate {
     func ballDidChange(_ ball: Detection?)
+    func ballError(_ error: Error?)
 }
 
 class DetectorModel: NSObject, ObservableObject {
@@ -113,8 +168,8 @@ class DetectorModel: NSObject, ObservableObject {
     }
     
     @MainActor
-    func processTrackingResults(_ results: [VNDetectedObjectObservation]) {
-        guard let result = results.first, result.confidence > 0.8 else {
+    func processTrackingResults(_ results: [VNDetectedObjectObservation]?) {
+        guard let result = results?.first, result.confidence > 0.1 else {
             ballChangeDelegate?.ballDidChange(nil)
             return
         }
@@ -122,7 +177,7 @@ class DetectorModel: NSObject, ObservableObject {
         ball?.observation = result
         ballChangeDelegate?.ballDidChange(ball)
     }
-        
+            
     @MainActor
     func reset() {
         detections = []
@@ -136,8 +191,8 @@ class DetectorModel: NSObject, ObservableObject {
 }
 
 extension DetectorModel: CameraOutputDelegate {
+
     func cameraModel(_ cameraModel: CameraModel, didReceiveBuffer buffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) {
-        
         
         detectionQueue.async {
             do {
@@ -147,13 +202,13 @@ extension DetectorModel: CameraOutputDelegate {
                                                      on: buffer,
                                                      orientation: orientation)
                     if let results = self.ballTrackingRequest?.results as? [VNDetectedObjectObservation] {
-                        DispatchQueue.main.async {
-                            self.processTrackingResults(results)
-                        }
-                        if let first = results.first, first.confidence > 0.2 {
+                        if let first = results.first, first.confidence > 0 {
                             self.ballTrackingRequest?.inputObservation = first
+                            DispatchQueue.main.async {
+                                self.processTrackingResults(results)
+                            }
                         } else {
-                            throw NSError.errorWithMessage("Ball tracking ended")
+                            print("$$$ Lost \(results)")
                         }
                     }
                 } else {
@@ -173,38 +228,11 @@ extension DetectorModel: CameraOutputDelegate {
                 DispatchQueue.main.async {
                     self.ball = nil
                     self.error = err
-                    print(err)
+                    self.processTrackingResults(nil)
+                    self.ballChangeDelegate?.ballError(err)
+                    print("$$$ Error \(err)")
                 }
             }
         }
     }
-}
-
-
-struct DetectionView: View {
-    
-    @EnvironmentObject var detectorModel: DetectorModel
-    @EnvironmentObject var cameraModel: CameraModel
-    var detection: Detection
-    
-    func convertedRect() -> CGRect {
-        return cameraModel.convertVisionRectToCameraRect(detection.box)
-    }
-    
-    var body: some View {
-        BoundingBox(box: convertedRect())
-            .stroke(detection.color, style: StrokeStyle(lineWidth: 3, lineCap: .square))
-    }
-}
-
-
-struct BoundingBox: Shape {
-    
-    var box: CGRect
-    
-    func path(in rect: CGRect) -> Path {
-        let box = UIBezierPath(rect: box)
-        return Path(box.cgPath)
-    }
-    
 }

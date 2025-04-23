@@ -17,12 +17,13 @@
 		4E6024752DB731B8005F7B7F /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024622DB731B7005F7B7F /* Views.swift */; };
 		4E6024762DB731B8005F7B7F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024642DB731B7005F7B7F /* AppDelegate.swift */; };
 		4E6024772DB731B8005F7B7F /* CameraModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024662DB731B7005F7B7F /* CameraModel.swift */; };
-		4E6024782DB731B8005F7B7F /* DetectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024672DB731B7005F7B7F /* DetectorView.swift */; };
+		4E6024782DB731B8005F7B7F /* DetectorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024672DB731B7005F7B7F /* DetectorModel.swift */; };
 		4E6024792DB731B8005F7B7F /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024682DB731B7005F7B7F /* GameView.swift */; };
 		4E60247A2DB731B8005F7B7F /* MainApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024692DB731B7005F7B7F /* MainApp.swift */; };
 		4E60247B2DB731B8005F7B7F /* TrajectoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E60246A2DB731B7005F7B7F /* TrajectoryView.swift */; };
 		4E60247C2DB731B8005F7B7F /* WhooshML.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 4E60246B2DB731B7005F7B7F /* WhooshML.mlmodel */; };
 		4E60247D2DB731B8005F7B7F /* WhooshML2.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 4E60246C2DB731B7005F7B7F /* WhooshML2.mlmodel */; };
+		4E60247F2DB860A1005F7B7F /* GameModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E60247E2DB8609E005F7B7F /* GameModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,12 +38,13 @@
 		4E6024642DB731B7005F7B7F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4E6024652DB731B7005F7B7F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4E6024662DB731B7005F7B7F /* CameraModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraModel.swift; sourceTree = "<group>"; };
-		4E6024672DB731B7005F7B7F /* DetectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectorView.swift; sourceTree = "<group>"; };
+		4E6024672DB731B7005F7B7F /* DetectorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectorModel.swift; sourceTree = "<group>"; };
 		4E6024682DB731B7005F7B7F /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		4E6024692DB731B7005F7B7F /* MainApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainApp.swift; sourceTree = "<group>"; };
 		4E60246A2DB731B7005F7B7F /* TrajectoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrajectoryView.swift; sourceTree = "<group>"; };
 		4E60246B2DB731B7005F7B7F /* WhooshML.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = WhooshML.mlmodel; sourceTree = "<group>"; };
 		4E60246C2DB731B7005F7B7F /* WhooshML2.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = WhooshML2.mlmodel; sourceTree = "<group>"; };
+		4E60247E2DB8609E005F7B7F /* GameModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,7 +109,8 @@
 				4E6024642DB731B7005F7B7F /* AppDelegate.swift */,
 				4E6024692DB731B7005F7B7F /* MainApp.swift */,
 				4E6024662DB731B7005F7B7F /* CameraModel.swift */,
-				4E6024672DB731B7005F7B7F /* DetectorView.swift */,
+				4E6024672DB731B7005F7B7F /* DetectorModel.swift */,
+				4E60247E2DB8609E005F7B7F /* GameModel.swift */,
 				4E6024682DB731B7005F7B7F /* GameView.swift */,
 				4E60246A2DB731B7005F7B7F /* TrajectoryView.swift */,
 				4E60246B2DB731B7005F7B7F /* WhooshML.mlmodel */,
@@ -197,10 +200,11 @@
 				4E6024722DB731B8005F7B7F /* Common.swift in Sources */,
 				4E6024732DB731B8005F7B7F /* Extensions.swift in Sources */,
 				4E6024742DB731B8005F7B7F /* Shapes.swift in Sources */,
+				4E60247F2DB860A1005F7B7F /* GameModel.swift in Sources */,
 				4E6024752DB731B8005F7B7F /* Views.swift in Sources */,
 				4E6024762DB731B8005F7B7F /* AppDelegate.swift in Sources */,
 				4E6024772DB731B8005F7B7F /* CameraModel.swift in Sources */,
-				4E6024782DB731B8005F7B7F /* DetectorView.swift in Sources */,
+				4E6024782DB731B8005F7B7F /* DetectorModel.swift in Sources */,
 				4E6024792DB731B8005F7B7F /* GameView.swift in Sources */,
 				4E60247A2DB731B8005F7B7F /* MainApp.swift in Sources */,
 				4E60247B2DB731B8005F7B7F /* TrajectoryView.swift in Sources */,

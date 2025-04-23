@@ -8,6 +8,7 @@
 import SwiftUI
 import Foundation
 import Vision
+import CoreGraphics
 
 
 extension VNTrackingRequest {
@@ -35,8 +36,20 @@ extension NSError {
 
 
 extension CGRect {
+    
     var center: CGPoint {
         return CGPoint(x: midX, y: midY)
+    }
+    
+    func isNear(_ rect: CGRect, tolerance: CGFloat = 0.1) -> Bool {
+        return center.isNear(rect.center, tolerance: tolerance)
+    }
+}
+
+extension CGPoint {
+    
+    func isNear(_ point: CGPoint, tolerance: CGFloat = 0.1) -> Bool {
+        return distance(to: point) < tolerance
     }
 }
 
