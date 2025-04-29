@@ -17,8 +17,9 @@ protocol CameraOutputDelegate: AnyObject {
 
 class CameraModel: NSObject, ObservableObject {
     
+    @Published var visionConversionRect: CGRect?
     weak var detectorDelegate: CameraOutputDelegate?
-    weak var visionDelegate: CameraOutputDelegate?
+    var sampleBuffer: CMSampleBuffer?
     
     private let videoDataOutputQueue = DispatchQueue(label: "com.Woosh.VideoDataOutput", qos: .userInitiated,
                                                      attributes: [], autoreleaseFrequency: .workItem)
@@ -107,31 +108,61 @@ class CameraModel: NSObject, ObservableObject {
         }
     }
     
-    func convertVisionPointsToCameraPoint(_ points: [CGPoint]) -> [CGPoint] {
-        //Flip y then convert to layerSpace
-        let new = points.map { CGPoint(x: $0.x, y: 1 - $0.y) }
-        return new.map { previewLayer.layerPointConverted(fromCaptureDevicePoint: $0) }
+    func finalImage() -> UIImage? {
+        guard let sample = sampleBuffer, let buffer = CMSampleBufferGetImageBuffer(sample) else {
+            return nil
+        }
+        let ciImage = CIImage(cvImageBuffer: buffer)
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+            return nil
+        }
+        let image = UIImage(cgImage: cgImage, scale: 1.0, orientation: .right)
+        return image
     }
-        
-    func convertVisionRectToCameraRect(_ rect: CGRect) -> CGRect {
+    
+    func calcVisionConversionRect() -> CGRect {
+        let p0 = CGPoint(x: 0, y: 0)
+        let n0 = convertVisionPointToCameraPoint(p0)
+        let p1 = CGPoint(x: 1, y: 1)
+        let n1 = convertVisionPointToCameraPoint(p1)
+        let rect = CGRect(x: n0.x, y: n0.y, width: n1.x - n0.x, height: n1.y - n0.y)
+        return rect
+    }
+    
+    /*
+    private func convertVisionPointsToCameraPoints(_ points: [CGPoint]) -> [CGPoint] {
+        return points.map { convertVisionPointToCameraPoint($0) }
+    }
+    */
+    
+    private func convertVisionPointToCameraPoint(_ point: CGPoint) -> CGPoint {
         //Flip y then convert to layerSpace
-        let flip = CGRect(x: rect.minX,
-                          y: 1 - rect.minY,
-                          width: rect.width,
-                          height: rect.height)
-        let start = previewLayer.layerPointConverted(fromCaptureDevicePoint: flip.origin)
-        let end = previewLayer.layerPointConverted(fromCaptureDevicePoint: CGPoint(x: flip.maxX, y: flip.maxY))
+        let flip = CGPoint(x: point.x, y: 1 - point.y)
+        return previewLayer.layerPointConverted(fromCaptureDevicePoint: flip)
+    }
+    
+    /*
+    private func convertVisionRectToCameraRect(_ rect: CGRect) -> CGRect {
+        let start = convertVisionPointToCameraPoint(rect.origin)
+        let end = convertVisionPointToCameraPoint(rect.maxPoint)
         let size = CGSize(width: abs(end.x - start.x), height: abs(end.y - start.y))
         let new = CGRect(origin: start, size: size)
         return new
     }
+    */
 }
 
 extension CameraModel: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        self.sampleBuffer = sampleBuffer
         detectorDelegate?.cameraModel(self, didReceiveBuffer: sampleBuffer, orientation: .up)
-        visionDelegate?.cameraModel(self, didReceiveBuffer: sampleBuffer, orientation: .up)
+        if visionConversionRect == nil || visionConversionRect == .zero {
+            DispatchQueue.main.async {
+                self.visionConversionRect = self.calcVisionConversionRect()
+            }
+        }
     }
 }
 
@@ -168,3 +199,15 @@ struct CameraPreview: UIViewRepresentable {
     }
 }
 
+
+struct CameraView: View {    
+    @EnvironmentObject var cameraModel: CameraModel
+
+    var body: some View {
+        GeometryReader { geo in
+            CameraPreview(frame: geo.frame(in: .local))
+        }
+    }
+    
+    
+}

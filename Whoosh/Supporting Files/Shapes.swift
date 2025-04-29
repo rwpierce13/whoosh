@@ -40,7 +40,7 @@ struct Trajectory: Shape {
     var points: [CGPoint] = []
     
     func path(in rect: CGRect) -> Path {
-        let trajectory = UIBezierPath.smoothPath(points)
+        let trajectory = UIBezierPath.line(for: points)
         return Path(trajectory.cgPath)
     }
     

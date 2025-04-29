@@ -11,35 +11,35 @@ import Vision
 
 struct TrajectoryView: View {
     
-    @EnvironmentObject var cameraModel: CameraModel
     var collection: DetectionCollection
-    
-    func convertedPoints() -> [CGPoint] {
-        let points = collection.detections.map { $0.box.center }
-        return cameraModel.convertVisionPointsToCameraPoint(points)
-    }
+    var contentMode: ContentMode = .fill
     
     var body: some View {
-        Trajectory(points: convertedPoints())
-            .stroke(collection.color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+        GeometryReader { geo in
+            let frame = geo.frame(in: .local)
+            let points = collection.convertedPoints(to: frame, contentMode: contentMode)
+            Trajectory(points: points)
+                .stroke(collection.color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+        }
     }
-    
 }
 
 
 struct DetectionView: View {
     
-    @EnvironmentObject var detectorModel: DetectorModel
-    @EnvironmentObject var cameraModel: CameraModel
+    @EnvironmentObject var gameModel: GameModel
     var detection: Detection
     
-    func convertedRect() -> CGRect {
-        return cameraModel.convertVisionRectToCameraRect(detection.box)
+    func convertedRect(to rect: CGRect) -> CGRect {
+        guard let convert = gameModel.visionConversionRect else { return .zero }
+        return GameModel.convert(detection.box, to: rect, with: convert)
     }
     
     var body: some View {
-        BoundingBox(box: convertedRect())
-            .stroke(detection.color, style: StrokeStyle(lineWidth: 3, lineCap: .square))
+        GeometryReader { geo in
+            BoundingBox(box: convertedRect(to: geo.frame(in: .local)))
+                .stroke(detection.color, style: StrokeStyle(lineWidth: 3, lineCap: .square))
+        }
     }
 }
 

@@ -71,3 +71,65 @@ struct Center<Content>: View where Content : View {
         }
     }
 }
+
+
+struct BackgroundRectReader: View {
+    var coordinateSpaceName: String?
+    var onChange: (CGRect)->()
+    
+    var body: some View {
+        GeometryReader { geo in
+            Color.clear
+                .onAppear {
+                    if let name = coordinateSpaceName {
+                        onChange(geo.frame(in: .named(name)))
+                    } else {
+                        onChange(geo.frame(in: .global))
+                    }
+                }
+                .onChange(of: geo.size) {
+                    if let name = coordinateSpaceName {
+                        onChange(geo.frame(in: .named(name)))
+                    } else {
+                        onChange(geo.frame(in: .global))
+                    }
+                }
+                .onChange(of: geo.frame(in: .global)) {
+                    if let name = coordinateSpaceName {
+                        onChange(geo.frame(in: .named(name)))
+                    } else {
+                        onChange(geo.frame(in: .global))
+                    }
+                }
+        }
+    }
+}
+
+
+struct VSpacer: View {
+    
+    @State var height: CGFloat
+    
+    init(_ height: CGFloat) {
+        self.height = height
+    }
+    
+    var body: some View {
+        Spacer().frame(height: height)
+    }
+    
+}
+
+struct HSpacer: View {
+    
+    @State var width: CGFloat
+    
+    init(_ width: CGFloat) {
+        self.width = width
+    }
+    
+    var body: some View {
+        Spacer().frame(width: width)
+    }
+    
+}

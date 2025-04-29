@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4E5DC1022DC1325E00F8B7DD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5DC1012DC1325C00F8B7DD /* SettingsView.swift */; };
 		4E60246E2DB731B8005F7B7F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E60245C2DB731B7005F7B7F /* Preview Assets.xcassets */; };
 		4E60246F2DB731B8005F7B7F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E6024652DB731B7005F7B7F /* Assets.xcassets */; };
 		4E6024702DB731B8005F7B7F /* TrajectoryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E60245A2DB731B7005F7B7F /* TrajectoryModel.swift */; };
@@ -24,10 +25,12 @@
 		4E60247C2DB731B8005F7B7F /* WhooshML.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 4E60246B2DB731B7005F7B7F /* WhooshML.mlmodel */; };
 		4E60247D2DB731B8005F7B7F /* WhooshML2.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 4E60246C2DB731B7005F7B7F /* WhooshML2.mlmodel */; };
 		4E60247F2DB860A1005F7B7F /* GameModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E60247E2DB8609E005F7B7F /* GameModel.swift */; };
+		4E6024812DB88904005F7B7F /* ScoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6024802DB88901005F7B7F /* ScoreView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		4E3DC7A82D6D3D83006CEE43 /* Whoosh.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Whoosh.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E5DC1012DC1325C00F8B7DD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		4E60245A2DB731B7005F7B7F /* TrajectoryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrajectoryModel.swift; sourceTree = "<group>"; };
 		4E60245C2DB731B7005F7B7F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		4E60245E2DB731B7005F7B7F /* BezierConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BezierConfiguration.swift; sourceTree = "<group>"; };
@@ -45,6 +48,7 @@
 		4E60246B2DB731B7005F7B7F /* WhooshML.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = WhooshML.mlmodel; sourceTree = "<group>"; };
 		4E60246C2DB731B7005F7B7F /* WhooshML2.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = WhooshML2.mlmodel; sourceTree = "<group>"; };
 		4E60247E2DB8609E005F7B7F /* GameModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModel.swift; sourceTree = "<group>"; };
+		4E6024802DB88901005F7B7F /* ScoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,7 +116,9 @@
 				4E6024672DB731B7005F7B7F /* DetectorModel.swift */,
 				4E60247E2DB8609E005F7B7F /* GameModel.swift */,
 				4E6024682DB731B7005F7B7F /* GameView.swift */,
+				4E6024802DB88901005F7B7F /* ScoreView.swift */,
 				4E60246A2DB731B7005F7B7F /* TrajectoryView.swift */,
+				4E5DC1012DC1325C00F8B7DD /* SettingsView.swift */,
 				4E60246B2DB731B7005F7B7F /* WhooshML.mlmodel */,
 				4E60246C2DB731B7005F7B7F /* WhooshML2.mlmodel */,
 				4E60245B2DB731B7005F7B7F /* Models */,
@@ -196,7 +202,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E6024702DB731B8005F7B7F /* TrajectoryModel.swift in Sources */,
+				4E6024812DB88904005F7B7F /* ScoreView.swift in Sources */,
 				4E6024712DB731B8005F7B7F /* BezierConfiguration.swift in Sources */,
+				4E5DC1022DC1325E00F8B7DD /* SettingsView.swift in Sources */,
 				4E6024722DB731B8005F7B7F /* Common.swift in Sources */,
 				4E6024732DB731B8005F7B7F /* Extensions.swift in Sources */,
 				4E6024742DB731B8005F7B7F /* Shapes.swift in Sources */,

@@ -14,9 +14,8 @@ struct MainApp: App {
     
     var body: some Scene {
         WindowGroup {
-            NavigationView {
+            NavigationStack {
                 GameView()
-                    .edgesIgnoringSafeArea(.all)
             }
         }
     }
