@@ -52,6 +52,10 @@ extension CGRect {
     var maxPoint: CGPoint {
         return CGPoint(x: maxX, y: maxY)
     }
+    
+    func scale(by factor: CGFloat) -> CGRect {
+        return CGRect(x: minX * factor, y: minY * factor, width: width * factor, height: height * factor)
+    }
 }
 
 extension CGPoint {
@@ -270,5 +274,39 @@ extension Color {
     static let systemRed = Color(UIColor.systemRed)
     static let systemTeal = Color(UIColor.systemTeal)
     static let systemIndigo = Color(UIColor.systemIndigo)
+    
+}
+
+
+extension Font {
+    
+    static func regular(_ size: CGFloat) -> Font {
+        return Font.system(size: size, weight: .regular)
+    }
+    
+    static func semiBold(_ size: CGFloat) -> Font {
+        return Font.system(size: size, weight: .semibold)
+    }
+    
+    static func bold(_ size: CGFloat) -> Font {
+        return Font.system(size: size, weight: .bold)
+    }
+
+}
+
+
+extension Text {
+    
+    func regularFont(_ size: CGFloat) -> Text {
+        return self.font(Font.regular(size))
+    }
+    
+    func semiBoldFont(_ size: CGFloat) -> Text {
+        return self.font(Font.semiBold(size))
+    }
+    
+    func boldFont(_ size: CGFloat) -> Text {
+        return self.font(Font.bold(size))
+    }
     
 }

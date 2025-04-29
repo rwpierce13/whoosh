@@ -12,12 +12,11 @@ import Vision
 struct TrajectoryView: View {
     
     var collection: DetectionCollection
-    var contentMode: ContentMode = .fill
     
     var body: some View {
         GeometryReader { geo in
             let frame = geo.frame(in: .local)
-            let points = collection.convertedPoints(to: frame, contentMode: contentMode)
+            let points = collection.convertedPoints(to: frame)
             Trajectory(points: points)
                 .stroke(collection.color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
         }

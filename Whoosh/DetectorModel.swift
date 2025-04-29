@@ -110,9 +110,9 @@ struct DetectionCollection: Identifiable {
     
     
     //MARK: - Coordinate Conversion
-    func convertedPoints(to rect: CGRect, contentMode: ContentMode) -> [CGPoint] {
+    func convertedPoints(to rect: CGRect) -> [CGPoint] {
         let points = ballDetections.map { $0.box.center }
-        let new = GameModel.convert(points, to: rect, with: conversionRect, mode: contentMode)
+        let new = GameModel.convert(points, to: rect, with: conversionRect)
         return new
     }
     
@@ -183,6 +183,10 @@ struct DetectionCollection: Identifiable {
         let aims = movingDetections.compactMap { aim(for: $0) }
         let equal = aims.dropFirst().allSatisfy { $0 == aims.first }
         return equal ? aims.first : nil
+    }
+    
+    func read() -> Read? {
+        return nil
     }
     
     func aim(for detection: Detection) -> Aim {

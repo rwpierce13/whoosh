@@ -82,68 +82,58 @@ class GameModel: ObservableObject {
 
 //MARK: - Coordinate Conversion
 extension GameModel {
-    static func convert(_ points: [CGPoint], to viewRect: CGRect, with conversionRect: CGRect, mode: ContentMode = .fill) -> [CGPoint] {
-        return points.map { convert($0, to: viewRect, with: conversionRect, mode: mode) }
+    static func convert(_ points: [CGPoint], to viewRect: CGRect, with conversionRect: CGRect) -> [CGPoint] {
+        return points.map { convert($0, to: viewRect, with: conversionRect) }
     }
     
-    static func convert(_ point: CGPoint, to viewRect: CGRect, with conversionRect: CGRect, mode: ContentMode = .fill) -> CGPoint {
+    static func convert(_ point: CGPoint, to viewRect: CGRect, with conversionRect: CGRect) -> CGPoint {
         //De-normalize points to values that we know are correct
         var x = point.x * conversionRect.width
         var y = point.y * conversionRect.height
-        
-        if mode == .fill {
-            if conversionRect.aspectRatio > viewRect.aspectRatio {
-                //match heights
-                //Find ratio to resize
-                let ratio = viewRect.height / conversionRect.height
-                x *= ratio
-                y *= ratio
-                //Center new view over conversionRect
-                let shift = (viewRect.width - conversionRect.width) / 2
-                x += shift
+                
+        if conversionRect.aspectRatio > viewRect.aspectRatio {
+            //Fit to height
+            //Find ratio to resize
+            let ratio = viewRect.height / conversionRect.height
+            x *= ratio
+            y *= ratio
+            
+            //Center new view inside conversionRect
+            let convertedRect = conversionRect.scale(by: ratio)
+            let shift = (convertedRect.width - viewRect.width) / 2
+            if ratio >= 1 {
+                x -= shift
             } else {
-                //match widths
-                let ratio = viewRect.width / conversionRect.width
-                x *= ratio
-                y *= ratio
-                let shift = (viewRect.height - conversionRect.height) / 2
-                y += shift
+                x += shift
             }
         } else {
-            print("$$$ V \(viewRect)")
-            if conversionRect.aspectRatio > viewRect.aspectRatio {
-                //fit to width
-                let ratio = viewRect.width / conversionRect.width
-                x *= ratio
-                y *= ratio
-                let shift = (conversionRect.height - viewRect.height) / 2
-                y += shift
+            //Fit to width
+            //Find ratio to resize
+            let ratio = viewRect.width / conversionRect.width
+            x *= ratio
+            y *= ratio
+            
+            //Center new view inside conversionRect
+            let convertedRect = conversionRect.scale(by: ratio)
+            let shift = (convertedRect.height - viewRect.height) / 2
+            if ratio >= 1 {
+                y -= shift
             } else {
-                //fit to height
-                //Find ratio to resize
-                let ratio = viewRect.height / conversionRect.height
-                y *= ratio
-                x *= ratio
-                //Center new view inside conversionRect
-                let shift = (conversionRect.width - viewRect.width) / 2
-                x += shift
-                let convertedRect = CGRect(x: 0, y: 0, width: conversionRect.width * ratio, height: conversionRect.height * ratio)
-                print("$$$ Conv \(convertedRect)")
-                print("$$$ Org \(conversionRect)")
+                y += shift
             }
         }
-        
+            
         return CGPoint(x: x, y: y)
     }
     
-    static func convert(_ rect: CGRect, to viewRect: CGRect, with conversionRect: CGRect, mode: ContentMode = .fill) -> CGRect {
-        let origin = convert(rect.origin, to: viewRect, with: conversionRect, mode: mode)
-        let max = convert(rect.maxPoint, to: viewRect, with: conversionRect, mode: mode)
+    static func convert(_ rect: CGRect, to viewRect: CGRect, with conversionRect: CGRect) -> CGRect {
+        let origin = convert(rect.origin, to: viewRect, with: conversionRect)
+        let max = convert(rect.maxPoint, to: viewRect, with: conversionRect)
         return CGRect(origin: origin, size: CGSize(width: max.x - origin.x, height: max.y - origin.y))
     }
     
-    static func convert(_ rects: [CGRect], to viewRect: CGRect, with conversionRect: CGRect, mode: ContentMode = .fill) -> [CGRect] {
-        return rects.map { convert($0, to: viewRect, with: conversionRect, mode: mode) }
+    static func convert(_ rects: [CGRect], to viewRect: CGRect, with conversionRect: CGRect) -> [CGRect] {
+        return rects.map { convert($0, to: viewRect, with: conversionRect) }
     }
 }
 

@@ -8,13 +8,28 @@
 import SwiftUI
 
 
-
 enum Distance: String {
     case good, long, short
+    
+    var readable: String {
+        return rawValue.capitalized
+    }
 }
 
 enum Aim: String {
     case straight, right, left
+    
+    var readable: String {
+        return rawValue.capitalized
+    }
+}
+
+enum Read: String {
+    case good, right, left
+    
+    var readable: String {
+        return rawValue.capitalized
+    }
 }
 
 struct Score {
@@ -22,13 +37,15 @@ struct Score {
     var putt: DetectionCollection
     var distance: Distance?
     var aim: Aim?
-    var read: Aim?
+    var read: Read?
     var value: Int = 0
+    var maxValue: Int = 4
     
     init(putt: DetectionCollection) {
         self.putt = putt
         self.distance = putt.ballStopDistance()
         self.aim = putt.aim()
+        self.read = putt.read()
         self.value = calcValue()
     }
     
@@ -40,7 +57,10 @@ struct Score {
         if aim == .straight {
             value += 1
         }
-        if read == .straight {
+        if read == .good {
+            value += 1
+        }
+        if value == maxValue - 1 {
             value += 1
         }
         return value
@@ -55,74 +75,79 @@ struct ScoreView: View {
     @State var score: Score?
     
     var body: some View {
-        ScrollView {
-            VSStack {
-                Text("Game State: \(gameModel.state.statusText)")
-                    .padding(.bottom, 5)
-                Text("Aim: \(score?.aim?.rawValue ?? "None")")
-                    .padding(.bottom, 5)
-                Text("Distance: \(score?.distance?.rawValue ?? "None")")
-                    .padding(.bottom, 5)
-                Text("Read: \(score?.read?.rawValue ?? "None")")
-                    .padding(.bottom, 5)
-                Text("Score: \(score?.value ?? 0)/4")
-                    .padding(.bottom, 40)
-                ZStack {
-                    if let image = gameModel.finalImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            //.border(Color.white, width: 1)
-                            .background {
-                                BackgroundRectReader { rect in
-                                    print("$$$ Image \(rect)")
-                                }
+        VSStack {
+            ScrollView {
+                VSStack {
+                    HSStack(alignment: .top) {
+                        Spacer()
+                        VSStack {
+                            Text("Score")
+                                .semiBoldFont(24)
+                                .padding(.bottom, 20)
+                            HSStack {
+                                Text("Aim")
+                                    .regularFont(16)
+                                Spacer(minLength: 40)
+                                Text("\(score?.aim?.readable ?? "None")")
+                                    .foregroundStyle(.green)
+                                    .semiBoldFont(20)
                             }
-                    }
-                    if let putt = score?.putt {
-                        TrajectoryView(collection: putt, contentMode: .fit)
-                            //.border(Color.yellow, width: 1)
-                            .background {
-                                BackgroundRectReader { rect in
-                                    print("$$$ Traj \(rect)")
-                                }
+                            .padding(.bottom, 10)
+                            HSStack {
+                                Text("Dist.")
+                                    .regularFont(16)
+                                Spacer(minLength: 40)
+                                Text("\(score?.distance?.readable ?? "None")")
+                                    .foregroundStyle(.green)
+                                    .semiBoldFont(20)
                             }
+                            .padding(.bottom, 10)
+                            HSStack {
+                                Text("Read")
+                                    .regularFont(16)
+                                Spacer(minLength: 40)
+                                Text("\(score?.read?.readable ?? "None")")
+                                    .foregroundStyle(.green)
+                                    .semiBoldFont(20)
+                            }
+                            .padding(.bottom, 10)
+                            HSStack {
+                                Text("Score")
+                                    .regularFont(16)
+                                Spacer(minLength: 40)
+                                Text("\(score?.value ?? 0) / \(score?.maxValue ?? 0)")
+                                    .foregroundStyle(.green)
+                                    .semiBoldFont(20)
+                            }
+                            Spacer()
+                        }
+                        .fixedSize()
+                        
+                        Spacer(minLength: 20)
+                        
+                        VSStack {
+                            if let image = gameModel.finalImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .overlay {
+                                        if let putt = score?.putt {
+                                            TrajectoryView(collection: putt)
+                                        }
+                                    }
+                                    .clipped()
+                                    .frame(height: 350)
+                                    .cornerRadius(10)
+                            }
+                            Spacer()
+                        }
                     }
                 }
-                .clipped()
-                .frame(height: 270)
-                .cornerRadius(10)
-                .padding(.bottom, 40)
-                
-                Button {
-                    gameModel.reset()
-                    dismiss()
-                } label: {
-                    HSStack {
-                        Image(systemName: "mappin.and.ellipse")
-                            .fitTo(height: 24)
-                            .foregroundStyle(.white)
-                            .padding(.trailing, 20)
-                        Text("Putt Again")
-                            .font(Font.system(size: 20))
-                            .foregroundStyle(.white)
-                    }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 20)
-                    .background(.green)
-                    .cornerRadius(10)
-                }
-                .padding(.bottom, 20)
-                Button {
-                    if let putt = gameModel.putt {
-                        score = Score(putt: putt)
-                    }
-                } label: {
-                    Text("Recalculate")
-                }
-                .padding(.bottom, 40)
+                .padding(20)
             }
-            .padding(.horizontal, 40)
+            
+            Spacer()
+            bottomButtons()
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -139,5 +164,36 @@ struct ScoreView: View {
                 score = Score(putt: putt)
             }
         }
+    }
+    
+    @ViewBuilder
+    func bottomButtons() -> some View {
+        Button {
+            gameModel.reset()
+            dismiss()
+        } label: {
+            HSStack {
+                Image(systemName: "mappin.and.ellipse")
+                    .fitTo(height: 24)
+                    .foregroundStyle(.white)
+                    .padding(.trailing, 20)
+                Text("Putt Again")
+                    .font(Font.system(size: 20))
+                    .foregroundStyle(.white)
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 20)
+            .background(.green)
+            .cornerRadius(10)
+        }
+        .padding(.bottom, 20)
+        Button {
+            if let putt = gameModel.putt {
+                score = Score(putt: putt)
+            }
+        } label: {
+            Text("Recalculate")
+        }
+        .padding(.bottom, 40)
     }
 }
