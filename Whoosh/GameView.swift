@@ -18,11 +18,13 @@ class UIModel: ObservableObject {
 
 struct GameView: View {
     
+    @Environment(\.scenePhase) var scenePhase
+    
     @StateObject var cameraModel = CameraModel()
     @StateObject var detectorModel = DetectorModel()
     @StateObject var gameModel = GameModel()
     @StateObject var uiModel = UIModel()
-    
+        
     var body: some View {
         ZStack {
             ZStack {
@@ -30,6 +32,9 @@ struct GameView: View {
                 
                 LinesOverlay()
                 
+                if let putt = gameModel.putt {
+                    TrajectoryView(collection: putt)
+                }
                 if let tee = detectorModel.tee {
                     DetectionView(detection: tee)
                 }
@@ -39,13 +44,26 @@ struct GameView: View {
                 if let ball = detectorModel.ball {
                     DetectionView(detection: ball)
                 }
-                if let putt = gameModel.putt {
-                    TrajectoryView(collection: putt)
-                }
             }
             .ignoresSafeArea(.all)
             
             TopControl()
+        }
+        .onChange(of: scenePhase) { _, new in
+            switch new {
+            case .background:
+                cameraModel.shutDown()
+                detectorModel.reset()
+                gameModel.reset()
+                detectorModel.stop()
+            case .inactive:
+                break
+            case .active:
+                cameraModel.restart()
+                detectorModel.start()
+            @unknown default:
+                break
+            }
         }
         .onChange(of: cameraModel.visionConversionRect) { _, new in
             gameModel.visionConversionRect = new
@@ -157,7 +175,7 @@ struct GameButton: View {
     @ViewBuilder
     func buttonView() -> some View {
         switch gameModel.state {
-        case .initial:
+        case .initial, .recording:
             Text(gameModel.state.statusText)
                 .font(Font.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
@@ -176,8 +194,6 @@ struct GameButton: View {
             .padding(.vertical, 10)
             .background(.red)
             .cornerRadius(10)
-        case .recording:
-            EmptyView()
         case .done:
             HSStack {
                 Image(systemName: "checkmark.circle.fill")

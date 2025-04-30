@@ -132,7 +132,7 @@ struct ScoreView: View {
                                     .aspectRatio(contentMode: .fit)
                                     .overlay {
                                         if let putt = score?.putt {
-                                            TrajectoryView(collection: putt)
+                                            TrajectoryView(collection: putt, lineWidth: 3)
                                         }
                                     }
                                     .clipped()
@@ -152,6 +152,7 @@ struct ScoreView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
+                    gameModel.reset()
                     dismiss()
                 } label: {
                     Image(systemName: "x.circle.fill")
@@ -185,14 +186,6 @@ struct ScoreView: View {
             .padding(.horizontal, 20)
             .background(.green)
             .cornerRadius(10)
-        }
-        .padding(.bottom, 20)
-        Button {
-            if let putt = gameModel.putt {
-                score = Score(putt: putt)
-            }
-        } label: {
-            Text("Recalculate")
         }
         .padding(.bottom, 40)
     }

@@ -54,6 +54,10 @@ struct Detection: Identifiable {
         self.color = type.color()
     }
     
+    var label: String {
+        return labels.first?.capitalized ?? "Unknown"
+    }
+    
     static func convertBox(_ box: CGRect) -> CGRect {
         //Original boundingBox are landscape video detections
         //Flip x/y to convert to portrait video
@@ -150,9 +154,8 @@ struct DetectionCollection: Identifiable {
     }
     
     func ballStopDistance() -> Distance? {
-        guard endIsStationary() else { return nil }
-        guard let lastDet = ballDetections.last else { return nil }
-        guard let holeDet = holeDetection else { return nil }
+        guard let lastDet = ballDetections.last,
+              let holeDet = holeDetection else { return nil }
         let dy = lastDet.box.center.y - holeDet.box.center.y
         if abs(dy) < DistanceNoiseFilter {
             return .good
@@ -219,7 +222,6 @@ class DetectorModel: NSObject, ObservableObject {
     
     private var detecting = false
     
-    private let minConfidence: VNConfidence = 0.95
     private var sequenceHandler = VNSequenceRequestHandler()
     private var objectDetectionRequest: VNCoreMLRequest!
     private var ballTrackingRequest: VNTrackingRequest?
@@ -252,18 +254,18 @@ class DetectorModel: NSObject, ObservableObject {
         
         let balls = detections.filter { $0.type == .ball }
         ball = balls.first
-        /*
-        let holes = detections.filter { $0.type == .hole }
-        hole = holes.first
-        let tees = detections.filter { $0.type == .tee }
-        tee = tees.first
-         */
         
         if UserDefaults.standard.bool(forKey: Keys.UseTestHole.rawValue) {
             hole = Detection.hole()
+        } else {
+            let holes = detections.filter { $0.type == .hole }
+            hole = holes.first
         }
         if UserDefaults.standard.bool(forKey: Keys.UseTestTee.rawValue) {
             tee = Detection.tee()
+        } else {
+            let tees = detections.filter { $0.type == .tee }
+            tee = tees.first
         }
         
         puttChangeDelegate?.ballDidChange(ball)
@@ -273,7 +275,7 @@ class DetectorModel: NSObject, ObservableObject {
     
     @MainActor
     func processTrackingResults(_ results: [VNDetectedObjectObservation]?) {
-        guard let result = results?.first, result.confidence > 0.1 else {
+        guard let result = results?.first, result.confidence > 0 else {
             puttChangeDelegate?.ballDidChange(nil)
             return
         }
@@ -300,6 +302,7 @@ class DetectorModel: NSObject, ObservableObject {
     @MainActor
     func stop() {
         detecting = false
+        reset()
     }
 
 }
@@ -323,7 +326,7 @@ extension DetectorModel: CameraOutputDelegate {
                                 self.processTrackingResults(results)
                             }
                         } else {
-                            //print("$$$ Lost \(results)")
+                            print("$$$ Detection Error - Lost Tracking \(results)")
                         }
                     }
                 } else {
@@ -344,8 +347,8 @@ extension DetectorModel: CameraOutputDelegate {
                     self.ball = nil
                     self.error = err
                     self.processTrackingResults(nil)
-                    self.puttChangeDelegate?.ballError(err)
-                    print("$$$ Error \(err)")
+                    //self.puttChangeDelegate?.ballError(err)
+                    print("$$$ Detection Error - \(err)")
                 }
             }
         }

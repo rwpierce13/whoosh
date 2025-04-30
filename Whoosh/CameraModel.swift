@@ -33,6 +33,19 @@ class CameraModel: NSObject, ObservableObject {
         setupPreviewLayer()
     }
     
+    func shutDown() {
+        sessionQueue.async {
+            self.cameraSession.stopRunning()
+        }
+    }
+    
+    func restart() {
+        if cameraSession.isRunning { return }
+        sessionQueue.async {
+            self.cameraSession.startRunning()
+        }
+    }
+    
     func setupPreviewLayer() {
         previewLayer = AVCaptureVideoPreviewLayer(session: cameraSession)
         previewLayer.videoGravity = .resizeAspectFill
@@ -129,28 +142,12 @@ class CameraModel: NSObject, ObservableObject {
         let rect = CGRect(x: n0.x, y: n0.y, width: n1.x - n0.x, height: n1.y - n0.y)
         return rect
     }
-    
-    /*
-    private func convertVisionPointsToCameraPoints(_ points: [CGPoint]) -> [CGPoint] {
-        return points.map { convertVisionPointToCameraPoint($0) }
-    }
-    */
-    
+
     private func convertVisionPointToCameraPoint(_ point: CGPoint) -> CGPoint {
         //Flip y then convert to layerSpace
         let flip = CGPoint(x: point.x, y: 1 - point.y)
         return previewLayer.layerPointConverted(fromCaptureDevicePoint: flip)
     }
-    
-    /*
-    private func convertVisionRectToCameraRect(_ rect: CGRect) -> CGRect {
-        let start = convertVisionPointToCameraPoint(rect.origin)
-        let end = convertVisionPointToCameraPoint(rect.maxPoint)
-        let size = CGSize(width: abs(end.x - start.x), height: abs(end.y - start.y))
-        let new = CGRect(origin: start, size: size)
-        return new
-    }
-    */
 }
 
 extension CameraModel: AVCaptureVideoDataOutputSampleBufferDelegate {

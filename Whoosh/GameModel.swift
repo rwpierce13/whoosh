@@ -15,11 +15,11 @@ enum GameState {
     var statusText: String {
         switch self {
         case .initial:
-            return "Searching for ball"
+            return "Waiting for ball"
         case .ready:
             return "Ready to record!"
         case .recording:
-            return "Recording..."
+            return "Recording"
         case .done:
             return "Done!"
         case .error:
